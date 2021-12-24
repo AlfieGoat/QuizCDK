@@ -44,10 +44,11 @@ export class QuizStack extends Stack {
       certificate: this.quizHostedZoneConstruct.certificates[props.websiteCertificatePrefix],
       domain: props.domain,
       domainPrefix: props.websiteCertificatePrefix,
-      staticSiteAssetsPath: props.staticSiteAssetsPath
+      staticSiteAssetsPath: props.staticSiteAssetsPath,
+      hostedZone: this.quizHostedZoneConstruct.hostedZone,
     })
 
-    this.quizHostedZoneConstruct.addARecord(this.quizStaticSiteConstruct.getHttpApiTarget(), `QuizStaticSiteHttpApiTarget`, props.websiteCertificatePrefix)
+    // this.quizHostedZoneConstruct.addARecord(this.quizStaticSiteConstruct.getHttpApiTarget(), `QuizStaticSiteHttpApiTarget`, props.websiteCertificatePrefix)
 
     this.quizGraphQLApi = new QuizApiConstruct(this, 'QuizApiConstruct', {
       schemaPath: props.schemaPath,

@@ -8,17 +8,20 @@ import {
 
 import { Code, Function, IFunction, Runtime } from "@aws-cdk/aws-lambda";
 import {
+  IHostedZone,
   IRecordSet,
   RecordTarget,
 } from "@aws-cdk/aws-route53";
 import { Construct } from "@aws-cdk/core";
 import { HttpLambdaIntegration } from "@aws-cdk/aws-apigatewayv2-integrations";
+import { NextJSLambdaEdge } from "@sls-next/cdk-construct";
 
 interface QuizStaticSiteCdkStackProps {
   certificate: ICertificate;
   domain: string;
   domainPrefix: string;
   staticSiteAssetsPath: string;
+  hostedZone: IHostedZone;
 }
 
 export class QuizStaticSiteCdkStack extends Construct {
@@ -29,32 +32,41 @@ export class QuizStaticSiteCdkStack extends Construct {
   constructor(
     scope: Construct,
     id: string,
-    {domain, domainPrefix, staticSiteAssetsPath, certificate} : QuizStaticSiteCdkStackProps
+    {domain, domainPrefix, staticSiteAssetsPath, certificate, hostedZone} : QuizStaticSiteCdkStackProps
   ) {
     super(scope, id);
 
-    this.staticWebsiteLambda = new Function(this, `${id}.staticWebsiteLambda`, {
-      runtime: Runtime.NODEJS_12_X,
-      code: Code.fromAsset(staticSiteAssetsPath),
-      handler: "index.handler",
-      memorySize: 1024,
+    const nextJSLambda = new NextJSLambdaEdge(this, "NextJsApp", {
+      serverlessBuildOutDir: staticSiteAssetsPath,
+      domain:{
+        hostedZone,
+        certificate,
+        domainNames: [`${domainPrefix}.${domain}`]
+      }
     });
 
-    this.httpApiDomainName = new DomainName(this, `${id}.HttpApi.DomainName`, {
-      certificate: certificate,
-      domainName: `${domainPrefix}.${domain}`,
-    });
+    // this.staticWebsiteLambda = new Function(this, `${id}.staticWebsiteLambda`, {
+    //   runtime: Runtime.NODEJS_12_X,
+    //   code: Code.fromAsset(staticSiteAssetsPath),
+    //   handler: "index.handler",
+    //   memorySize: 1024,
+    // });
 
-    this.apiGateway = new HttpApi(this, `${id}.HttpApi`, {
-      createDefaultStage: true,
-      defaultDomainMapping: {
-        domainName: this.httpApiDomainName,
-      },
-      defaultIntegration: new HttpLambdaIntegration(
-        `${id}.LambdaIntegration`,
-        this.staticWebsiteLambda
-      ),
-    });
+    // this.httpApiDomainName = new DomainName(this, `${id}.HttpApi.DomainName`, {
+    //   certificate: certificate,
+    //   domainName: `${domainPrefix}.${domain}`,
+    // });
+
+    // this.apiGateway = new HttpApi(this, `${id}.HttpApi`, {
+    //   createDefaultStage: true,
+    //   defaultDomainMapping: {
+    //     domainName: this.httpApiDomainName,
+    //   },
+    //   defaultIntegration: new HttpLambdaIntegration(
+    //     `${id}.LambdaIntegration`,
+    //     this.staticWebsiteLambda
+    //   ),
+    // });
   }
 
   public getHttpApiTarget(){

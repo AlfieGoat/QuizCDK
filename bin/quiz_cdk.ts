@@ -15,6 +15,7 @@ const DOMAIN = 'aggoatch.people.amazon.dev'
 const WEBSITE_CERTIFICATE_PREFIX = 'quiz';
 const API_CERTIFICATE_PREFIX = 'api';
 const STATIC_SITE_ASSETS_PATH = '../QuizStaticWebsiteLambda/build'
+const NEXT_JS_ASSETS = '../QuizWebsite/build'
 const USER_POOL_GROUPS = ['admin', 'moderator', 'user'];
 const SCHEMA_PATH = 'lib/schema.graphql'
 
@@ -27,7 +28,7 @@ new QuizStack(app, 'aggoatch', {
   domain: DOMAIN,
   websiteCertificatePrefix: WEBSITE_CERTIFICATE_PREFIX,
   apiCertificatePrefix: API_CERTIFICATE_PREFIX,
-  staticSiteAssetsPath: STATIC_SITE_ASSETS_PATH,
+  staticSiteAssetsPath: NEXT_JS_ASSETS,
   stackName: 'aggoatch-quiz-stack',
   env: ENVIRONMENT,
   userPoolGroups: USER_POOL_GROUPS,
