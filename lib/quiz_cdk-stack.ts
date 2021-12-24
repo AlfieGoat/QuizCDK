@@ -1,119 +1,57 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
-import { DnsValidatedCertificate, ICertificate } from 'aws-cdk-lib/aws-certificatemanager';
-import { CloudFrontWebDistribution, IDistribution, IOriginAccessIdentity, LambdaEdgeEventType, OriginAccessIdentity, ViewerCertificate } from 'aws-cdk-lib/aws-cloudfront';
-import { EdgeFunction } from 'aws-cdk-lib/aws-cloudfront/lib/experimental';
-import { IUserPool, IUserPoolClient, IUserPoolDomain, UserPool } from 'aws-cdk-lib/aws-cognito';
-import { Code, Function, IFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
-import { ARecord, HostedZone, IAliasRecordTarget, IHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
-import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
-import { Bucket, IBucket } from 'aws-cdk-lib/aws-s3';
-import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
-import { Construct } from 'constructs';
-import { writeFileSync } from 'fs';
-import * as path from 'path';
+import { App, Stack, StackProps } from "@aws-cdk/core";
+import { QuizApiConstruct } from "./quizApi";
+import { QuizAuthenticationConstruct } from "./quizAuthentication";
+import { HostedZoneConstruct } from "./quizHostedZone";
+import { QuizStaticSiteCdkStack } from "./quizStaticWebsiteCDK";
 
-const DESTINATION_KEY_PREFIX = "QuizManagerStaticWebsite";
-interface QuizStaticSiteCdkStackProps extends StackProps {
+export interface QuizStackProps extends StackProps {
+  callbackUrls: string[];
+  cognitoDomainPrefix: string;
   domain: string;
+  region: string;
+  websiteCertificatePrefix: string;
+  apiCertificatePrefix: string;
+  staticSiteAssetsPath: string;
+  userPoolGroups: string[];
+  schemaPath: string;
 }
-export class QuizStaticSiteCdkStack extends Stack {
-  public readonly cloudfrontWebDistribution: IDistribution;
-  public readonly staticWebsiteBucket: IBucket;
-  public readonly hostedZone: IHostedZone;
-  public readonly certificate: ICertificate;
-  public readonly target: IAliasRecordTarget;
-  public readonly originAccessIdentity: IOriginAccessIdentity;
-  public readonly userPool: IUserPool;
-  public readonly userPoolClient: IUserPoolClient;
-  public readonly lambdaAuth: IFunction;
-  public readonly userPoolDomain: IUserPoolDomain;
+export class QuizStack extends Stack {
+  private readonly quizAuthenticationConstruct: QuizAuthenticationConstruct;
+  private readonly quizHostedZoneConstruct: HostedZoneConstruct;
+  private readonly quizStaticSiteConstruct: QuizStaticSiteCdkStack;
+  private readonly quizGraphQLApi: QuizApiConstruct;
 
-  constructor(scope: Construct, id: string, props: QuizStaticSiteCdkStackProps) {
-    super(scope, id, props);
-
-    this.staticWebsiteBucket = new Bucket(this, `${id}.staticWebsiteBucket`,
-      { versioned: true }
-    )
-
-    this.hostedZone = new HostedZone(this, `${id}`, {
-      zoneName: `${props?.domain}`,
-    })
-
-    this.certificate = new DnsValidatedCertificate(this, `${id}.DNS.certificate`, {
-      domainName: `quiz.${props.domain}`,
-      hostedZone: this.hostedZone,
-      region: "us-east-1",
-    })
-
-    this.originAccessIdentity = new OriginAccessIdentity(this, `${id}.originAccessIdentity`);
-    this.staticWebsiteBucket.grantRead(this.originAccessIdentity);
-
-    this.userPool = new UserPool(this, `${id}.userPool`);
-    this.userPoolClient = this.userPool.addClient(`${id}.userPoolClient`);
-    this.userPoolDomain = this.userPool.addDomain(`${id}.userPoolDomain`, {
-      cognitoDomain: {
-        domainPrefix: "aggoatch-quiz"
-      }
-    })
-
-    const lambdaAuth = new EdgeFunction(this, `${id}.lambdaEdgeAuthenticator`, {
-      runtime: Runtime.NODEJS_12_X,
-      code: Code.fromAsset("QuizLambdaEdgeAuthBuild"),
-      handler: "index.handler",
-      environment: {
-        region: 'us-east-1',
-        userPoolId: this.userPool.userPoolId,
-        userPoolAppId: this.userPoolClient.userPoolClientId,
-        userPoolDomain: this.userPoolDomain.domainName
-      }
-    });
-
-    this.cloudfrontWebDistribution = new CloudFrontWebDistribution(this, `${id}.cloudfrontWebDistribution`,
+  constructor(scope: App, id: string, props: QuizStackProps) {
+    super(scope, `${id}-QuizStack`, props);
+    this.quizAuthenticationConstruct = new QuizAuthenticationConstruct(
+      this,
+      `QuizAuthenticationConstruct`,
       {
-        originConfigs: [{
-          s3OriginSource: {
-            originPath: `/${DESTINATION_KEY_PREFIX}`,
-            s3BucketSource: this.staticWebsiteBucket,
-            originAccessIdentity: this.originAccessIdentity,
+        callbackUrls: props.callbackUrls,
+        cognitoDomainPrefix: props.cognitoDomainPrefix,
+      }
+    );
 
-          },
-          behaviors: [{
-            
-            isDefaultBehavior: true,
-            lambdaFunctionAssociations: [
-              {
-                eventType: LambdaEdgeEventType.ORIGIN_REQUEST,
-                lambdaFunction: lambdaAuth.currentVersion,
-              },
-            ],
-          }],
-          
-        }],
+    props.userPoolGroups.forEach(groupName => this.quizAuthenticationConstruct.addGroup(`${QuizAuthenticationConstruct}.${groupName}`, groupName))
 
-        viewerCertificate: ViewerCertificate.fromAcmCertificate(
-          this.certificate,
-          { aliases: [`quiz.${props.domain}`] }
-        ),
-      })
+    this.quizHostedZoneConstruct = new HostedZoneConstruct(this, `QuizHostedZoneConstruct`, {
+      certificatePrefixes: [props.websiteCertificatePrefix, props.apiCertificatePrefix],
+      domain: props.domain,
+      region: props.region
+    })
 
-    this.target = new CloudFrontTarget(this.cloudfrontWebDistribution);
-    new ARecord(this, 'DomainToDistributionRecord', {
-      recordName: `quiz.${props.domain}`,
-      target: RecordTarget.fromAlias(this.target),
-      zone: this.hostedZone,
-    });
+    this.quizStaticSiteConstruct = new QuizStaticSiteCdkStack(this, 'QuizStaticSiteConstruct', {
+      certificate: this.quizHostedZoneConstruct.certificates[props.websiteCertificatePrefix],
+      domain: props.domain,
+      domainPrefix: props.websiteCertificatePrefix,
+      staticSiteAssetsPath: props.staticSiteAssetsPath
+    })
 
+    this.quizHostedZoneConstruct.addARecord(this.quizStaticSiteConstruct.getHttpApiTarget(), `QuizStaticSiteHttpApiTarget`, props.websiteCertificatePrefix)
 
-    new BucketDeployment(this, "DistBucketDeployment", {
-      destinationBucket: this.staticWebsiteBucket,
-      destinationKeyPrefix: DESTINATION_KEY_PREFIX,
-      distribution: this.cloudfrontWebDistribution,
-      distributionPaths: ["/*"],
-      sources: [
-        Source.asset(path.join("../QuizWebsite/out"))
-      ],
+    this.quizGraphQLApi = new QuizApiConstruct(this, 'QuizApiConstruct', {
+      schemaPath: props.schemaPath,
+      userPool: this.quizAuthenticationConstruct.userPool
     })
   }
-  
-
 }

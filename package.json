@@ -15,14 +15,21 @@
     "@types/node": "10.17.27",
     "jest": "^26.4.2",
     "ts-jest": "^26.2.0",
-    "aws-cdk": "2.0.0",
     "ts-node": "^9.0.0",
     "typescript": "~3.9.7"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.0.0",
-    "cognito-at-edge": "^1.1.0",
-    "constructs": "^10.0.0",
+    "@aws-cdk/core": "^1.123.0",
+    "@aws-cdk/aws-apigatewayv2": "^1.123.0",
+    "@aws-cdk/aws-apigatewayv2-integrations": "^1.123.0",
+    "@aws-cdk/aws-appsync-alpha": "^2.2.0-alpha.0",
+    "@aws-cdk/aws-route53": "^1.123.0",
+    "@aws-cdk/aws-certificatemanager": "^1.123.0",
+    "@aws-cdk/aws-lambda": "^1.123.0",
+    "@aws-cdk/aws-cognito": "^1.123.0",
+    "@aws-cdk/aws-appsync": "^1.123.0",
+    "@types/deep-diff": "^1.0.1",
+    "cdk-appsync-transformer": "^1.123.3",
     "source-map-support": "^0.5.16"
   }
 }
