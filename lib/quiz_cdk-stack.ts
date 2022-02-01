@@ -48,8 +48,6 @@ export class QuizStack extends Stack {
       hostedZone: this.quizHostedZoneConstruct.hostedZone,
     })
 
-    // this.quizHostedZoneConstruct.addARecord(this.quizStaticSiteConstruct.getHttpApiTarget(), `QuizStaticSiteHttpApiTarget`, props.websiteCertificatePrefix)
-
     this.quizGraphQLApi = new QuizApiConstruct(this, 'QuizApiConstruct', {
       schemaPath: props.schemaPath,
       userPool: this.quizAuthenticationConstruct.userPool

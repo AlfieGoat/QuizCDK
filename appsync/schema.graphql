@@ -1,0 +1,291 @@
+type Quiz {
+  id: ID!
+  quizName: String!
+  questions(filter: ModelQuestionContainerFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelQuestionContainerConnection
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type QuestionContainer {
+  id: ID!
+  quizID: ID!
+  questionNumber: Int!
+  question: Question!
+  correctAnswer: CorrectAnswer!
+  possibleAnswers(filter: ModelAnswerFilterInput, sortDirection: ModelSortDirection, limit: Int, nextToken: String): ModelAnswerConnection
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Question {
+  id: ID!
+  questionContainerId: ID!
+  questionText: String!
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Answer {
+  id: ID!
+  questionContainerId: ID!
+  answerText: String!
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type CorrectAnswer {
+  id: ID!
+  answer: Answer!
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+enum ModelSortDirection {
+  ASC
+  DESC
+}
+
+type ModelQuizConnection {
+  items: [Quiz]
+  nextToken: String
+}
+
+input ModelStringFilterInput {
+  ne: String
+  eq: String
+  le: String
+  lt: String
+  ge: String
+  gt: String
+  contains: String
+  notContains: String
+  between: [String]
+  beginsWith: String
+}
+
+input ModelIDFilterInput {
+  ne: ID
+  eq: ID
+  le: ID
+  lt: ID
+  ge: ID
+  gt: ID
+  contains: ID
+  notContains: ID
+  between: [ID]
+  beginsWith: ID
+}
+
+input ModelIntFilterInput {
+  ne: Int
+  eq: Int
+  le: Int
+  lt: Int
+  ge: Int
+  gt: Int
+  between: [Int]
+}
+
+input ModelFloatFilterInput {
+  ne: Float
+  eq: Float
+  le: Float
+  lt: Float
+  ge: Float
+  gt: Float
+  between: [Float]
+}
+
+input ModelBooleanFilterInput {
+  ne: Boolean
+  eq: Boolean
+}
+
+input ModelQuizFilterInput {
+  id: ModelIDFilterInput
+  quizName: ModelStringFilterInput
+  and: [ModelQuizFilterInput]
+  or: [ModelQuizFilterInput]
+  not: ModelQuizFilterInput
+}
+
+type Query {
+  getQuiz(id: ID!): Quiz
+  listQuizzes(filter: ModelQuizFilterInput, limit: Int, nextToken: String): ModelQuizConnection
+  getQuestionContainer(id: ID!): QuestionContainer
+  listQuestionContainers(filter: ModelQuestionContainerFilterInput, limit: Int, nextToken: String): ModelQuestionContainerConnection
+  getQuestion(id: ID!): Question
+  listQuestions(filter: ModelQuestionFilterInput, limit: Int, nextToken: String): ModelQuestionConnection
+  getAnswer(id: ID!): Answer
+  listAnswers(filter: ModelAnswerFilterInput, limit: Int, nextToken: String): ModelAnswerConnection
+  getCorrectAnswer(id: ID!): CorrectAnswer
+  listCorrectAnswers(filter: ModelCorrectAnswerFilterInput, limit: Int, nextToken: String): ModelCorrectAnswerConnection
+}
+
+input CreateQuizInput {
+  id: ID
+  quizName: String!
+}
+
+input UpdateQuizInput {
+  id: ID!
+  quizName: String
+}
+
+input DeleteQuizInput {
+  id: ID!
+}
+
+type Mutation {
+  createQuiz(input: CreateQuizInput!): Quiz
+  updateQuiz(input: UpdateQuizInput!): Quiz
+  deleteQuiz(input: DeleteQuizInput!): Quiz
+  createQuestionContainer(input: CreateQuestionContainerInput!): QuestionContainer
+  updateQuestionContainer(input: UpdateQuestionContainerInput!): QuestionContainer
+  deleteQuestionContainer(input: DeleteQuestionContainerInput!): QuestionContainer
+  createQuestion(input: CreateQuestionInput!): Question
+  updateQuestion(input: UpdateQuestionInput!): Question
+  deleteQuestion(input: DeleteQuestionInput!): Question
+  createAnswer(input: CreateAnswerInput!): Answer
+  updateAnswer(input: UpdateAnswerInput!): Answer
+  deleteAnswer(input: DeleteAnswerInput!): Answer
+  createCorrectAnswer(input: CreateCorrectAnswerInput!): CorrectAnswer
+  updateCorrectAnswer(input: UpdateCorrectAnswerInput!): CorrectAnswer
+  deleteCorrectAnswer(input: DeleteCorrectAnswerInput!): CorrectAnswer
+}
+
+type Subscription {
+  onCreateQuiz: Quiz @aws_subscribe(mutations: ["createQuiz"])
+  onUpdateQuiz: Quiz @aws_subscribe(mutations: ["updateQuiz"])
+  onDeleteQuiz: Quiz @aws_subscribe(mutations: ["deleteQuiz"])
+  onCreateQuestionContainer: QuestionContainer @aws_subscribe(mutations: ["createQuestionContainer"])
+  onUpdateQuestionContainer: QuestionContainer @aws_subscribe(mutations: ["updateQuestionContainer"])
+  onDeleteQuestionContainer: QuestionContainer @aws_subscribe(mutations: ["deleteQuestionContainer"])
+  onCreateQuestion: Question @aws_subscribe(mutations: ["createQuestion"])
+  onUpdateQuestion: Question @aws_subscribe(mutations: ["updateQuestion"])
+  onDeleteQuestion: Question @aws_subscribe(mutations: ["deleteQuestion"])
+  onCreateAnswer: Answer @aws_subscribe(mutations: ["createAnswer"])
+  onUpdateAnswer: Answer @aws_subscribe(mutations: ["updateAnswer"])
+  onDeleteAnswer: Answer @aws_subscribe(mutations: ["deleteAnswer"])
+  onCreateCorrectAnswer: CorrectAnswer @aws_subscribe(mutations: ["createCorrectAnswer"])
+  onUpdateCorrectAnswer: CorrectAnswer @aws_subscribe(mutations: ["updateCorrectAnswer"])
+  onDeleteCorrectAnswer: CorrectAnswer @aws_subscribe(mutations: ["deleteCorrectAnswer"])
+}
+
+type ModelQuestionContainerConnection {
+  items: [QuestionContainer]
+  nextToken: String
+}
+
+input ModelQuestionContainerFilterInput {
+  id: ModelIDFilterInput
+  quizID: ModelIDFilterInput
+  questionNumber: ModelIntFilterInput
+  and: [ModelQuestionContainerFilterInput]
+  or: [ModelQuestionContainerFilterInput]
+  not: ModelQuestionContainerFilterInput
+}
+
+input CreateQuestionContainerInput {
+  id: ID
+  quizID: ID!
+  questionNumber: Int!
+  questionContainerQuestionId: ID!
+  questionContainerCorrectAnswerId: ID!
+}
+
+input UpdateQuestionContainerInput {
+  id: ID!
+  quizID: ID
+  questionNumber: Int
+  questionContainerQuestionId: ID
+  questionContainerCorrectAnswerId: ID
+}
+
+input DeleteQuestionContainerInput {
+  id: ID!
+}
+
+type ModelQuestionConnection {
+  items: [Question]
+  nextToken: String
+}
+
+input ModelQuestionFilterInput {
+  id: ModelIDFilterInput
+  questionContainerId: ModelIDFilterInput
+  questionText: ModelStringFilterInput
+  and: [ModelQuestionFilterInput]
+  or: [ModelQuestionFilterInput]
+  not: ModelQuestionFilterInput
+}
+
+input CreateQuestionInput {
+  id: ID
+  questionContainerId: ID!
+  questionText: String!
+}
+
+input UpdateQuestionInput {
+  id: ID!
+  questionContainerId: ID
+  questionText: String
+}
+
+input DeleteQuestionInput {
+  id: ID!
+}
+
+type ModelAnswerConnection {
+  items: [Answer]
+  nextToken: String
+}
+
+input ModelAnswerFilterInput {
+  id: ModelIDFilterInput
+  questionContainerId: ModelIDFilterInput
+  answerText: ModelStringFilterInput
+  and: [ModelAnswerFilterInput]
+  or: [ModelAnswerFilterInput]
+  not: ModelAnswerFilterInput
+}
+
+input CreateAnswerInput {
+  id: ID
+  questionContainerId: ID!
+  answerText: String!
+}
+
+input UpdateAnswerInput {
+  id: ID!
+  questionContainerId: ID
+  answerText: String
+}
+
+input DeleteAnswerInput {
+  id: ID!
+}
+
+type ModelCorrectAnswerConnection {
+  items: [CorrectAnswer]
+  nextToken: String
+}
+
+input ModelCorrectAnswerFilterInput {
+  and: [ModelCorrectAnswerFilterInput]
+  or: [ModelCorrectAnswerFilterInput]
+  not: ModelCorrectAnswerFilterInput
+}
+
+input CreateCorrectAnswerInput {
+  id: ID
+  correctAnswerAnswerId: ID!
+}
+
+input UpdateCorrectAnswerInput {
+  correctAnswerAnswerId: ID
+}
+
+input DeleteCorrectAnswerInput {
+  id: ID!
+}

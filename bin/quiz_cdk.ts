@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import { QuizStack } from '../lib/quiz_cdk-stack';
-import { QuizApiConstruct } from '../lib/quizApi';
 
 import * as cdk from '@aws-cdk/core'
 
@@ -14,7 +13,6 @@ const COGNITO_DOMAIN_PREFIX = 'quiz-aggoatch'
 const DOMAIN = 'aggoatch.people.amazon.dev'
 const WEBSITE_CERTIFICATE_PREFIX = 'quiz';
 const API_CERTIFICATE_PREFIX = 'api';
-const STATIC_SITE_ASSETS_PATH = '../QuizStaticWebsiteLambda/build'
 const NEXT_JS_ASSETS = '../QuizWebsite/build'
 const USER_POOL_GROUPS = ['admin', 'moderator', 'user'];
 const SCHEMA_PATH = 'lib/schema.graphql'

@@ -10,7 +10,6 @@ import {
 } from "@aws-cdk/aws-route53";
 import { Construct } from "@aws-cdk/core";
 
-
 interface HostedZoneConstructProps {
   domain: string;
   certificatePrefixes: string[];
@@ -46,17 +45,6 @@ export class HostedZoneConstruct extends Construct {
         }),
       ])
     );
-
-    // new ARecord(this, "DomainToDistributionRecord", {
-    //   zone: this.hostedZone,
-    //   recordName: `quiz.${domain}`,
-    //   target: RecordTarget.fromAlias({
-    //     bind: (_record: IRecordSet) => ({
-    //       dnsName: this.httpApiDomainName.regionalDomainName,
-    //       hostedZoneId: this.httpApiDomainName.regionalHostedZoneId,
-    //     }),
-    //   }),
-    // });
   }
 
   public addARecord(target: RecordTarget, id: string, domainPrefix: string) {
