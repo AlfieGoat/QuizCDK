@@ -9,14 +9,15 @@ import { Construct } from "@aws-cdk/core";
 import { NextJSLambdaEdge } from "@sls-next/cdk-construct";
 
 interface QuizStaticSiteCdkStackProps {
-  certificate: ICertificate;
-  domain: string;
-  domainPrefix: string;
+  certificate?: ICertificate;
+  domain?: string;
+  domainPrefix?: string;
   staticSiteAssetsPath: string;
-  hostedZone: IHostedZone;
+  hostedZone?: IHostedZone;
 }
 
 export class QuizStaticSiteCdkStack extends Construct {
+  nextJSLambdaEdge: NextJSLambdaEdge;
   constructor(
     scope: Construct,
     id: string,
@@ -24,13 +25,18 @@ export class QuizStaticSiteCdkStack extends Construct {
   ) {
     super(scope, id);
 
-    new NextJSLambdaEdge(this, "NextJsApp", {
-      serverlessBuildOutDir: staticSiteAssetsPath,
+    // Only add domain if specified
+    const domainProps = (domain && certificate && domainPrefix && hostedZone) ? {
       domain:{
         hostedZone,
         certificate,
         domainNames: [`${domainPrefix}.${domain}`]
       }
+    } : {}
+
+    this.nextJSLambdaEdge = new NextJSLambdaEdge(this, "NextJsApp", {
+      serverlessBuildOutDir: staticSiteAssetsPath,
+      ...domainProps
     });
   }
 }

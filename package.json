@@ -6,6 +6,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "clean": "rm -rf cdk.out dist node_modules",
     "watch": "tsc -w",
     "test": "jest"
   },

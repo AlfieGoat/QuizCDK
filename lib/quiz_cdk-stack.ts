@@ -5,11 +5,11 @@ import { HostedZoneConstruct } from "./quizHostedZone";
 import { QuizStaticSiteCdkStack } from "./quizStaticWebsiteCDK";
 
 export interface QuizStackProps extends StackProps {
-  callbackUrls: string[];
+  cognitoCallbackUrl?: string;
   cognitoDomainPrefix: string;
-  domain: string;
+  domain?: string;
   region: string;
-  websiteCertificatePrefix: string;
+  websiteCertificatePrefix?: string;
   apiCertificatePrefix: string;
   staticSiteAssetsPath: string;
   userPoolGroups: string[];
@@ -23,34 +23,63 @@ export class QuizStack extends Stack {
 
   constructor(scope: App, id: string, props: QuizStackProps) {
     super(scope, `${id}-QuizStack`, props);
+
+    if (props.domain && props.websiteCertificatePrefix) {
+      this.quizHostedZoneConstruct = new HostedZoneConstruct(
+        this,
+        `QuizHostedZoneConstruct`,
+        {
+          certificatePrefixes: [
+            props.websiteCertificatePrefix,
+            props.apiCertificatePrefix,
+          ],
+          domain: props.domain,
+          region: props.region,
+        }
+      );
+    }
+
+    const certificate = props.websiteCertificatePrefix
+      ? {
+          certificate:
+            this.quizHostedZoneConstruct.certificates[
+              props.websiteCertificatePrefix
+            ],
+        }
+      : {};
+
+    this.quizStaticSiteConstruct = new QuizStaticSiteCdkStack(
+      this,
+      "QuizStaticSiteConstruct",
+      {
+        ...certificate,
+        domain: props.domain,
+        domainPrefix: props.websiteCertificatePrefix,
+        staticSiteAssetsPath: props.staticSiteAssetsPath,
+        hostedZone: this.quizHostedZoneConstruct?.hostedZone,
+      }
+    );
+    const callbackUrl = props.cognitoCallbackUrl ?? `https://${this.quizStaticSiteConstruct.nextJSLambdaEdge.distribution.domainName}`
+    
     this.quizAuthenticationConstruct = new QuizAuthenticationConstruct(
       this,
       `QuizAuthenticationConstruct`,
       {
-        callbackUrls: props.callbackUrls,
+        callbackUrls: [callbackUrl],
         cognitoDomainPrefix: props.cognitoDomainPrefix,
       }
     );
 
-    props.userPoolGroups.forEach(groupName => this.quizAuthenticationConstruct.addGroup(`${QuizAuthenticationConstruct}.${groupName}`, groupName))
+    props.userPoolGroups.forEach((groupName) =>
+      this.quizAuthenticationConstruct.addGroup(
+        `${QuizAuthenticationConstruct}.${groupName}`,
+        groupName
+      )
+    );
 
-    this.quizHostedZoneConstruct = new HostedZoneConstruct(this, `QuizHostedZoneConstruct`, {
-      certificatePrefixes: [props.websiteCertificatePrefix, props.apiCertificatePrefix],
-      domain: props.domain,
-      region: props.region
-    })
-
-    this.quizStaticSiteConstruct = new QuizStaticSiteCdkStack(this, 'QuizStaticSiteConstruct', {
-      certificate: this.quizHostedZoneConstruct.certificates[props.websiteCertificatePrefix],
-      domain: props.domain,
-      domainPrefix: props.websiteCertificatePrefix,
-      staticSiteAssetsPath: props.staticSiteAssetsPath,
-      hostedZone: this.quizHostedZoneConstruct.hostedZone,
-    })
-
-    this.quizGraphQLApi = new QuizApiConstruct(this, 'QuizApiConstruct', {
+    this.quizGraphQLApi = new QuizApiConstruct(this, "QuizApiConstruct", {
       schemaPath: props.schemaPath,
-      userPool: this.quizAuthenticationConstruct.userPool
-    })
+      userPool: this.quizAuthenticationConstruct.userPool,
+    });
   }
 }

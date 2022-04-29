@@ -8,9 +8,9 @@ const ENVIRONMENT = {
   region: 'us-east-1',
 }
 
-const COGNITO_CALLBACK_URL = 'https://quiz.aggoatch.people.amazon.dev'
 const COGNITO_DOMAIN_PREFIX = 'quiz-aggoatch'
 const DOMAIN = 'aggoatch.people.amazon.dev'
+const CALLBACK_URL = 'https://quiz.aggoatch.people.amazon.dev'
 const WEBSITE_CERTIFICATE_PREFIX = 'quiz';
 const API_CERTIFICATE_PREFIX = 'api';
 const NEXT_JS_ASSETS = '../QuizWebsite/build'
@@ -19,8 +19,8 @@ const SCHEMA_PATH = 'lib/schema.graphql'
 
 const app = new cdk.App();
 new QuizStack(app, 'aggoatch', {
-  callbackUrls: [COGNITO_CALLBACK_URL],
   region: ENVIRONMENT.region,
+  cognitoCallbackUrl: CALLBACK_URL,
   cognitoDomainPrefix: COGNITO_DOMAIN_PREFIX,
   description: "Quiz Stack for a quiz website",
   domain: DOMAIN,
